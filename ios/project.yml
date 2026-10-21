@@ -1,0 +1,82 @@
+name: LeBot
+options:
+  bundleIdPrefix: com.timrekelj
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+packages:
+  LeBotKit:
+    path: Packages/LeBotKit
+targets:
+  LeBot:
+    type: application
+    platform: iOS
+    sources:
+      - path: LeBot
+    dependencies:
+      - package: LeBotKit
+        product: LeBotCore
+      - package: LeBotKit
+        product: LeBotDesign
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.timrekelj.lebot
+        PRODUCT_NAME: LeBot
+        INFOPLIST_KEY_CFBundleDisplayName: Le Bot
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: LeBot/LeBot.entitlements
+    info:
+      path: LeBot/Info.plist
+      properties:
+        CFBundleDisplayName: Le Bot
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIBackgroundModes: [audio, remote-notification]
+        NSMicrophoneUsageDescription: Le Bot listens when you start a voice call with your agents.
+        NSCameraUsageDescription: Le Bot can look through your camera during a voice call when you turn it on.
+        NSSupportsLiveActivities: true
+        LBSupabaseURL: $(SUPABASE_URL)
+        LBSupabaseAnonKey: $(SUPABASE_ANON_KEY)
+        LBKeychainAccessGroup: $(AppIdentifierPrefix)com.timrekelj.lebot.shared
+        LBAppGroup: group.com.timrekelj.lebot
+    entitlements:
+      path: LeBot/LeBot.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.timrekelj.lebot]
+        keychain-access-groups: [$(AppIdentifierPrefix)com.timrekelj.lebot.shared]
+        com.apple.developer.applesignin: [Default]
+  LeBotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [LeBotTests]
+    dependencies:
+      - target: LeBot
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.timrekelj.lebot.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  LeBot:
+    build:
+      targets:
+        LeBot: all
+        LeBotTests: [test]
+    test:
+      targets: [LeBotTests]
+      gatherCoverageData: true

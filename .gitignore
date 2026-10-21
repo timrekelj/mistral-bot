@@ -31,3 +31,4 @@ node_modules/
 # Python (voice adapter)
 __pycache__/
 .venv/
+ios/Config/Local.xcconfig

@@ -1,6 +1,6 @@
-# Mistral Bot: Implementation Plan
+# Le Bot: Implementation Plan
 
-A Grok-style mobile assistant built on Mistral models. It runs a **main agent** plus any number of **sub-agents**. The main agent can delegate work to sub-agents, and agents can message each other. Each agent gets the same capabilities as Mistral Vibe **Work mode** (connectors, web search, code interpreter, libraries, files and canvas, skills, scheduled tasks, approvals). Voice runs on **Voxtral 3**. You can start a voice call from anywhere with the **iPhone Action Button**, without opening the app.
+**Le Bot** (bundle ID `com.timrekelj.lebot`) is a Grok-style mobile assistant built on Mistral models. It runs a **main agent** plus any number of **sub-agents**. The main agent can delegate work to sub-agents, and agents can message each other. Each agent gets the same capabilities as Mistral Vibe **Work mode** (connectors, web search, code interpreter, libraries, files and canvas, skills, scheduled tasks, approvals). Voice runs on **Voxtral 3**. You can start a voice call from anywhere with the **iPhone Action Button**, without opening the app.
 
 - **Platform order:** **iOS first** (native Swift/SwiftUI). Android (native Kotlin/Jetpack Compose) follows once the iOS app is feature-complete (Phase 8).
 - **Backend:** Supabase only. All agent logic runs in Supabase Edge Functions (TypeScript/Deno). There is no separate agent server.
@@ -346,7 +346,7 @@ Time-to-first-audio gets measured in Phase 5.
    - Exposed through an **`AppShortcutsProvider`** ("Call Mistral", "Call {agent}"), so it appears in the **Shortcuts** app automatically and works with **Siri** and Spotlight.
 2. **Shortcut → Action Button:** Settings → Action Button → Shortcut → "Call Mistral". This is the setup you asked for.
 3. **Control widget** (`ControlWidgetButton`, iOS 18+) running the same intent. It can be assigned to the Action Button **directly** (Settings → Action Button → Controls), without a Shortcut, and also added to Control Center and the lock screen. It's offered as the one-tap alternative.
-4. **Deep link** `mistralbot://call?agent=…` for automations, plus a "Call" button in the app.
+4. **Deep link** `lebot://call?agent=…` for automations, plus a "Call" button in the app.
 
 ### What happens when you press it
 1. `StartVoiceCallIntent.perform()` immediately:
@@ -370,7 +370,7 @@ Time-to-first-audio gets measured in Phase 5.
 
 ### Plumbing
 - **App Group + shared Keychain access group:** the app, the widget extension, and the intents share the Supabase session and cached tokens.
-- **Targets:** `MistralBot` (app, with intents running in-process for audio), `MistralBotWidgets` (Live Activity UI, Dynamic Island, Control widget), and `MistralBotKit` (a shared Swift package: models, Supabase client, voice session, intents).
+- **Targets:** `LeBot` (app, with intents running in-process for audio), `LeBotWidgets` (Live Activity UI, Dynamic Island, Control widget), and `LeBotKit` (a shared Swift package: models, Supabase client, voice session, intents).
 - **Info.plist:** `NSMicrophoneUsageDescription`, `UIBackgroundModes = [audio, remote-notification]`, `NSSupportsLiveActivities = YES`.
 - **First-run onboarding** includes an "Add to Action Button" step with instructions and a button that opens the relevant Settings or Shortcuts page.
 
@@ -382,7 +382,15 @@ If iOS refuses the background start (for example, mic permission was never grant
 ## 10. Mobile apps
 
 ### iOS (built first)
-Swift 6, SwiftUI, **iOS 18+** (required for `AudioRecordingIntent` and Control widgets), the Observation framework, `supabase-swift`, `LiveKit` Swift SDK, App Intents, ActivityKit, WidgetKit, a Markdown renderer, PhotosUI/camera, APNs, Sign in with Apple. Built with Swift Package Manager.
+Swift 6, SwiftUI, **iOS 26+** (Liquid Glass; also covers `AudioRecordingIntent` and Control widgets from iOS 18), XcodeGen (`ios/project.yml`), the Observation framework, `supabase-swift`, `LiveKit` Swift SDK, App Intents, ActivityKit, WidgetKit, a Markdown renderer, PhotosUI/camera, APNs, Sign in with Apple. Built with Swift Package Manager.
+
+### Design language
+Mistral's brand system, made native to iOS:
+- **Colour:** the five-step Mistral rainbow (`#FFD800` → `#FFAF00` → `#FF8205` → `#FA500F` → `#E10500`), warm beige surfaces (`#FFFAEB`) in light mode, and a tinted near-black (`#0E0D0B` / `#1E1E1E`) in dark mode. Primary buttons are ink capsules, Mistral's black call to action.
+- **Type:** SF Pro for reading, and SF Mono uppercase "eyebrow" labels (`MISTRAL · LARGE 4`) as the technical, pixel-era accent.
+- **Motif:** pixels and stripes. Le Bot's own mark is a rising pixel sun with one rainbow colour per row. It deliberately avoids Mistral's logo while sharing its language.
+- **Native structure:** standard navigation, Liquid Glass controls (composer, call buttons), SF Symbols, haptics, Dynamic Type, and Reduce Motion support.
+- **Live call visual:** a Metal shader (`PixelSun.metal`) draws a pixel sun whose heat is banded into the rainbow. While connecting, a comet orbits the rim. While listening, rings drift inward. While thinking, heat spirals through the core. While speaking, rings radiate outward with the agent's voice. Loudness eases with a VU-meter attack and decay, and a soft bloom glows underneath. The Live Activity and Dynamic Island use a static pixel-equalizer version.
 
 ### Android (Phase 8, after iOS is feature-complete)
 Kotlin, Jetpack Compose with Material 3, minSdk 28, Coroutines/Flow, Hilt, `supabase-kt`, LiveKit Android SDK, CameraX, FCM, and Google sign-in via Credential Manager.
@@ -434,9 +442,9 @@ mistral-bot/
 │       └── push-notify/
 ├── voice/                     # LiveKit voice adapter (Python), deployed via `lk agent deploy`
 ├── ios/
-│   ├── MistralBot/            # app target (SwiftUI, in-process App Intents)
-│   ├── MistralBotWidgets/     # Live Activity, Dynamic Island, Control widget
-│   └── MistralBotKit/         # shared Swift package
+│   ├── LeBot/                 # app target (SwiftUI, in-process App Intents)
+│   ├── LeBotWidgets/     # Live Activity, Dynamic Island, Control widget
+│   └── LeBotKit/         # shared Swift package
 └── android/                   # Phase 8
 ```
 
@@ -474,7 +482,7 @@ Phases 0–7 build the backend and the **iOS app**. Phase 8 ports the finished e
 
 ## 13. Defaults chosen (change any of them)
 
-- **iOS first**, native SwiftUI, iOS 18+. Android native Compose afterwards.
+- **iOS first**, native SwiftUI, iOS 26+. Android native Compose afterwards.
 - **Backend:** Supabase only (Pro plan). Voice is the only non-Supabase piece, and LiveKit Cloud hosts it.
 - **Web search:** Mistral built-in, with the findings cache and per-task caps
 - **Quick call:** `AudioRecordingIntent` + Live Activity (not CallKit). Triggered from the Action Button via the Shortcut or the Control widget.

@@ -1,0 +1,31 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tooling
+        run: |
+          brew install xcodegen
+          xcodebuild -downloadComponent MetalToolchain || true
+      - name: Package tests
+        run: swift test --package-path Packages/LeBotKit
+      - name: Generate project
+        run: xcodegen generate
+      - name: App tests
+        run: |
+          DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [0-9]+ Pro \(' | sed 's/ ($//')
+          xcodebuild test -project LeBot.xcodeproj -scheme LeBot \
+            -destination "platform=iOS Simulator,name=${DEVICE}" \
+            CODE_SIGNING_ALLOWED=NO | xcbeautify || exit ${PIPESTATUS[0]}

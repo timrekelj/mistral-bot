@@ -1,0 +1,5 @@
+// Copy to Local.xcconfig and fill in. Never commit Local.xcconfig.
+// Values come from `supabase status` (local) or the dashboard (hosted).
+SUPABASE_URL = http:/$()/127.0.0.1:54321
+SUPABASE_ANON_KEY = your-anon-or-publishable-key
+// DEVELOPMENT_TEAM = ABCDE12345

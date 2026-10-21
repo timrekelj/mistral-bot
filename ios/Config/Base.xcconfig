@@ -1,0 +1,6 @@
+// Shared build settings. Per-developer values live in Local.xcconfig (gitignored).
+// `//` starts a comment in xcconfig, so URLs escape it as `/$()/`.
+SUPABASE_URL = http:/$()/127.0.0.1:54321
+SUPABASE_ANON_KEY =
+
+#include? "Local.xcconfig"
