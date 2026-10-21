@@ -32,12 +32,32 @@ Use the legacy JWT `service_role` key: it is what Edge Functions receive as
 native runtime; with Docker use `http://host.docker.internal:<port>`). To rotate, use
 `vault.update_secret`.
 
+## Bring your own key (BYOK)
+
+Users add their own Mistral API key in the app. The `api-keys` function verifies it with
+`GET {MISTRAL_API_BASE_URL}/v1/models` and stores it in Vault (secret name
+`provider_key:<user_id>:<provider>`). `public.provider_credentials` only holds the Vault
+reference plus display metadata. Clients can read their own `provider, key_hint, status,
+verified_at, updated_at` columns and nothing else, so REST reads must name these columns
+(`select=*` is denied). Server code reads the key with `getMistralKey()` in
+`_shared/credentials.ts`.
+
+- `POST /functions/v1/api-keys` `{"provider":"mistral","api_key":"..."}`: 200 with
+  `{provider, key_hint, status, verified_at}`, 400 `malformed_api_key`, 422 `invalid_api_key`,
+  or 503 `provider_unavailable`.
+- `DELETE /functions/v1/api-keys` `{"provider":"mistral"}`: 204.
+- `chat-send` returns 412 `missing_api_key` when the user has no key.
+
+If `MISTRAL_API_KEY` is set as a function secret, it is used for every user without a key of
+their own. This is a development convenience; leave it unset in production. To test without a
+real key, point `MISTRAL_API_BASE_URL` at a stub in `supabase/functions/.env`.
+
 ## Deploy
 
 ```sh
 supabase link --project-ref <project-ref>
 supabase db push
-supabase functions deploy agent-step chat-send
+supabase functions deploy agent-step chat-send api-keys
 supabase secrets set --env-file supabase/functions/.env
 ```
 

@@ -2,8 +2,10 @@ import LeBotDesign
 import SwiftUI
 
 struct ChatView: View {
+    @Environment(AppModel.self) private var appModel
     @State private var chat = ChatModel()
     @State private var isShowingLibrary = false
+    @State private var isAddingKey = false
     @State private var call: VoiceCallModel?
 
     private let agentName = "Mistral"
@@ -29,14 +31,24 @@ struct ChatView: View {
             .scrollDismissesKeyboard(.interactively)
             .background(Palette.background.ignoresSafeArea())
             .safeAreaInset(edge: .bottom) {
-                Composer(chat: chat) { startCall() }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
+                VStack(spacing: 10) {
+                    if appModel.mistralKey.needsKey {
+                        APIKeyPromptCard { isAddingKey = true }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    Composer(chat: chat) { startCall() }
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+                .animation(.smooth, value: appModel.mistralKey.needsKey)
             }
             .toolbar { toolbar }
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $isShowingLibrary) {
                 LibraryView()
+            }
+            .sheet(isPresented: $isAddingKey) {
+                APIKeySheet()
             }
             .fullScreenCover(item: $call) { model in
                 VoiceCallView(model: model)
@@ -71,6 +83,41 @@ struct ChatView: View {
 }
 
 extension VoiceCallModel: Identifiable {}
+
+/// Shown above the composer until the user adds a working Mistral API key.
+private struct APIKeyPromptCard: View {
+    @Environment(AppModel.self) private var appModel
+    var onAdd: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            PixelMark().frame(width: 30)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isRejected ? "Your API key was rejected" : "Add your Mistral API key")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                Text("Le Bot runs on your own Mistral account.")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.textSecondary)
+            }
+            Spacer(minLength: 8)
+            Button(isRejected ? "Replace" : "Add key", action: onAdd)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Palette.onPrimaryFill)
+                .padding(.horizontal, 14)
+                .frame(height: 34)
+                .background(Palette.primaryFill, in: .capsule)
+        }
+        .padding(.leading, 14)
+        .padding(.trailing, 10)
+        .padding(.vertical, 12)
+        .glassEffect(.regular, in: .rect(cornerRadius: 22))
+    }
+
+    private var isRejected: Bool {
+        if case let .stored(status) = appModel.mistralKey { status.state == .invalid } else { false }
+    }
+}
 
 private struct AgentPicker: View {
     var name: String

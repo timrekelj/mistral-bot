@@ -8,7 +8,7 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
+                Section("Agents") {
                     HStack(spacing: 14) {
                         PixelMark().frame(width: 34)
                         VStack(alignment: .leading, spacing: 3) {
@@ -17,8 +17,6 @@ struct LibraryView: View {
                         }
                     }
                     .padding(.vertical, 4)
-                } header: {
-                    Text("Agents")
                 }
 
                 Section("Conversations") {
@@ -27,16 +25,22 @@ struct LibraryView: View {
                         .foregroundStyle(Palette.textSecondary)
                 }
 
-                Section("Account") {
-                    LabeledContent("Signed in as", value: accountLabel)
-                    Button("Sign out", role: .destructive) {
-                        dismiss()
-                        Task { await appModel.signOut() }
-                    }
-                }
-
                 Section {
-                    LabeledContent("Version", value: Bundle.main.versionLabel)
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Label {
+                            HStack {
+                                Text("Settings")
+                                Spacer()
+                                if appModel.mistralKey.needsKey {
+                                    Text("Add API key").eyebrow(Palette.accent)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: "gearshape.fill").foregroundStyle(Palette.textSecondary)
+                        }
+                    }
                 }
             }
             .scrollContentBackground(.hidden)
@@ -50,21 +54,5 @@ struct LibraryView: View {
             }
         }
         .presentationDragIndicator(.visible)
-    }
-
-    private var accountLabel: String {
-        switch appModel.state {
-        case let .signedIn(user): user.email ?? "Apple ID"
-        case .preview: "Preview"
-        default: "—"
-        }
-    }
-}
-
-private extension Bundle {
-    var versionLabel: String {
-        let version = infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        let build = infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        return "\(version) (\(build))"
     }
 }

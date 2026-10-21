@@ -6,7 +6,7 @@
   "lock": false,
   "tasks": {
     "test": "deno test --allow-env tests/",
-    "check": "deno check agent-step/index.ts chat-send/index.ts",
+    "check": "deno check agent-step/index.ts chat-send/index.ts api-keys/index.ts",
     "ci": "deno fmt --check && deno lint && deno task check && deno task test"
   },
   "fmt": {

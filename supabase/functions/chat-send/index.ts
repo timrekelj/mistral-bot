@@ -2,9 +2,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { preflight } from "../_shared/cors.ts";
+import { requireMistralKey } from "../_shared/credentials.ts";
 import { loadEnv } from "../_shared/env.ts";
 import { errorResponse, HttpError, isUuid, json, readJsonObject } from "../_shared/http.ts";
-import { serviceClient, userClient } from "../_shared/supabase.ts";
+import { authenticate, serviceClient } from "../_shared/supabase.ts";
 
 const MAX_TEXT_LENGTH = 32_000;
 
@@ -72,17 +73,10 @@ Deno.serve(async (req) => {
   if (cors) return cors;
   try {
     if (req.method !== "POST") throw new HttpError(405, "method not allowed");
-    const authorization = req.headers.get("Authorization");
-    if (!authorization) throw new HttpError(401, "unauthorized");
-
-    const db = userClient(env, authorization);
-    const { data: auth, error: authError } = await db.auth.getUser(
-      authorization.replace(/^Bearer\s+/i, ""),
-    );
-    if (authError || !auth.user) throw new HttpError(401, "unauthorized");
-    const userId = auth.user.id;
-
+    const { userId, db } = await authenticate(env, req);
     const request = parseRequest(await readJsonObject(req));
+    await requireMistralKey(service, userId);
+
     const conversation = await resolveConversation(db, userId, request);
 
     const { data: message, error: messageError } = await db

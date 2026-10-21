@@ -72,6 +72,10 @@ import_map = "./functions/deno.json"
 verify_jwt = true
 import_map = "./functions/deno.json"
 
+[functions.api-keys]
+verify_jwt = true
+import_map = "./functions/deno.json"
+
 [analytics]
 enabled = false
 

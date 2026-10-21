@@ -211,6 +211,8 @@ There are two reasons not to rely only on Mistral's Connectors API (which is in 
 
 ## 7. Model routing, caching & cost
 
+> With bring-your-own-key (section 13), Mistral usage bills to each user's own Mistral account. These estimates are what one user pays Mistral. The operator pays only the fixed costs.
+
 ### 7.1 Unit prices (Mistral list prices, October 2026; previews, so subject to change)
 
 | Item | Price |
@@ -487,7 +489,7 @@ Phases 0–7 build the backend and the **iOS app**. Phase 8 ports the finished e
 - **Web search:** Mistral built-in, with the findings cache and per-task caps
 - **Quick call:** `AudioRecordingIntent` + Live Activity (not CallKit). Triggered from the Action Button via the Shortcut or the Control widget.
 - **Audience:** built multi-user-safe (RLS, per-user OAuth) even if it's only for you at first
-- **Mistral API key:** stays server-side only (Edge Function secrets and the LiveKit agent secrets). Clients only ever get Supabase JWTs, LiveKit tokens, or ephemeral Mistral client sessions.
+- **Bring your own key:** each user adds their own Mistral API key in Settings (or from the prompt card in chat). The `api-keys` Edge Function checks it against Mistral (`GET /v1/models`), then stores it encrypted in **Supabase Vault**. A `provider_credentials` row holds only the last four characters and the verification status, and clients can't read the Vault reference. The runtime decrypts the key server-side with `getMistralKey()`, so background and scheduled runs keep working while the app is closed. The app never sees the key again. Usage, including voice and web search, bills to the user's own Mistral account. A server-wide `MISTRAL_API_KEY` is only a dev fallback, and `chat-send` returns `412 missing_api_key` when neither key exists. Clients only ever get Supabase JWTs, LiveKit tokens, or ephemeral Mistral client sessions.
 
 ## 14. Risks
 

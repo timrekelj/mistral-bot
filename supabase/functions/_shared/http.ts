@@ -1,7 +1,8 @@
 import { corsHeaders } from "./cors.ts";
 
+/** `message` is shown to users; `code` is a stable machine-readable reason for clients. */
 export class HttpError extends Error {
-  constructor(readonly status: number, message: string) {
+  constructor(readonly status: number, message: string, readonly code?: string) {
     super(message);
   }
 }
@@ -14,7 +15,10 @@ export function json(body: unknown, status = 200): Response {
 }
 
 export function errorResponse(error: unknown): Response {
-  if (error instanceof HttpError) return json({ error: error.message }, error.status);
+  if (error instanceof HttpError) {
+    const body = error.code ? { error: error.message, code: error.code } : { error: error.message };
+    return json(body, error.status);
+  }
   console.error(error);
   return json({ error: "internal error" }, 500);
 }
