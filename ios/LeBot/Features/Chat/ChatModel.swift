@@ -22,7 +22,7 @@ final class ChatModel {
     var draft = ""
 
     @ObservationIgnored private let responder: any ChatResponder
-    @ObservationIgnored private var streaming: Task<Void, Never>?
+    private var streaming: Task<Void, Never>?
 
     init(responder: any ChatResponder = PreviewResponder()) {
         self.responder = responder
