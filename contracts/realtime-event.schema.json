@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mistral-bot.local/contracts/realtime-event.schema.json",
+  "title": "RealtimeEvent",
+  "description": "Payload of a broadcast on the private `conversation:{id}` channel. The broadcast event name equals `type`.",
+  "oneOf": [
+    { "$ref": "#/$defs/delta" },
+    { "$ref": "#/$defs/message_completed" },
+    { "$ref": "#/$defs/agent_event" },
+    { "$ref": "#/$defs/run_status" }
+  ],
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "delta": {
+      "description": "Coalesced token text (about every 50 ms). Append in `seq` order per message.",
+      "type": "object",
+      "required": ["type", "run_id", "message_id", "seq", "text"],
+      "properties": {
+        "type": { "const": "delta" },
+        "run_id": { "$ref": "#/$defs/uuid" },
+        "message_id": { "$ref": "#/$defs/uuid" },
+        "seq": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "message_completed": {
+      "description": "The message is persisted; reload it from `messages` to replace streamed text.",
+      "type": "object",
+      "required": ["type", "run_id", "message_id"],
+      "properties": {
+        "type": { "const": "message_completed" },
+        "run_id": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+        "message_id": { "$ref": "#/$defs/uuid" }
+      },
+      "additionalProperties": false
+    },
+    "agent_event": {
+      "description": "A persisted `agent_events` row (tool steps, todos, delegation, `noop_step` in Phase 0).",
+      "type": "object",
+      "required": ["type", "event"],
+      "properties": {
+        "type": { "const": "agent_event" },
+        "event": {
+          "type": "object",
+          "required": ["id", "run_id", "agent_id", "step_no", "type", "payload", "created_at"],
+          "properties": {
+            "id": { "$ref": "#/$defs/uuid" },
+            "run_id": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+            "agent_id": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+            "step_no": { "type": ["integer", "null"], "minimum": 0 },
+            "type": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "payload": { "type": "object" },
+            "created_at": { "type": "string", "format": "date-time" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "run_status": {
+      "type": "object",
+      "required": ["type", "run_id", "status", "step_no"],
+      "properties": {
+        "type": { "const": "run_status" },
+        "run_id": { "$ref": "#/$defs/uuid" },
+        "status": {
+          "enum": [
+            "ready",
+            "running",
+            "waiting_input",
+            "waiting_approval",
+            "waiting_subtasks",
+            "completed",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "step_no": { "type": "integer", "minimum": 0 },
+        "error": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

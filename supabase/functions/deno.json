@@ -1,0 +1,20 @@
+{
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "lock": false,
+  "tasks": {
+    "test": "deno test --allow-env tests/",
+    "check": "deno check agent-step/index.ts chat-send/index.ts",
+    "ci": "deno fmt --check && deno lint && deno task check && deno task test"
+  },
+  "fmt": {
+    "lineWidth": 100
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mistral-bot.local/contracts/message-content.schema.json",
+  "title": "MessageContent",
+  "description": "messages.content: an ordered array of parts.",
+  "type": "array",
+  "items": { "$ref": "#/$defs/part" },
+  "$defs": {
+    "part": {
+      "oneOf": [
+        { "$ref": "#/$defs/text" },
+        { "$ref": "#/$defs/image" },
+        { "$ref": "#/$defs/file" },
+        { "$ref": "#/$defs/tool_call" },
+        { "$ref": "#/$defs/tool_result" }
+      ]
+    },
+    "text": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "image": {
+      "type": "object",
+      "required": ["type", "path", "mime_type"],
+      "properties": {
+        "type": { "const": "image" },
+        "path": { "type": "string", "description": "Supabase Storage object path." },
+        "mime_type": { "type": "string", "pattern": "^image/" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "required": ["type", "path", "name", "mime_type"],
+      "properties": {
+        "type": { "const": "file" },
+        "path": { "type": "string", "description": "Supabase Storage object path." },
+        "name": { "type": "string" },
+        "mime_type": { "type": "string" },
+        "size_bytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "tool_call": {
+      "type": "object",
+      "required": ["type", "call_id", "tool", "args"],
+      "properties": {
+        "type": { "const": "tool_call" },
+        "call_id": { "type": "string" },
+        "tool": { "type": "string" },
+        "args": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "tool_result": {
+      "type": "object",
+      "required": ["type", "call_id", "result"],
+      "properties": {
+        "type": { "const": "tool_result" },
+        "call_id": { "type": "string" },
+        "result": {},
+        "is_error": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    }
+  }
+}
