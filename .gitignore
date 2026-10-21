@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/functions/.env
+**/*.p8
+**/*.p12
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/configuration/
+ios/*.xcodeproj
+.swiftpm/
+.build/
+
+# Deno / Node
+node_modules/
+.deno/
+
+# Python (voice adapter)
+__pycache__/
+.venv/
